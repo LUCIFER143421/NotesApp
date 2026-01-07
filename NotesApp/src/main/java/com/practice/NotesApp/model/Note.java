@@ -1,11 +1,8 @@
 package com.practice.NotesApp.model;
 
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.stereotype.Component;
 
 @Getter
 @Setter
@@ -18,4 +15,7 @@ public class Note {
     private String id;
     private String title;
     private String content;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;  // Owner of the note
 }
