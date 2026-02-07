@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -71,6 +72,16 @@ public class NoteController {
         return ResponseEntity.ok(NoteMapper.noteResponseDto(updated));
     }
 
+    // ------------------- UPDATE ANY NOTE (EDITOR) -------------------
+    @PutMapping("/any/id/{myId}")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<NoteResponseDto> putAny(@Valid @RequestBody NoteRequestDto dto,
+                                                  @PathVariable String myId){
+        Note note = NoteMapper.toEntity(dto);
+        Note updated = noteService.updateNoteById(myId, note);
+        return ResponseEntity.ok(NoteMapper.noteResponseDto(updated));
+    }
+
     // ------------------- DELETE NOTE -------------------
     @DeleteMapping("/id/{myId}")
     public ResponseEntity<String> deleteById(@PathVariable String myId, Principal principal){
@@ -78,6 +89,14 @@ public class NoteController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         noteService.deleteNoteForUser(myId, user);
+        return ResponseEntity.ok("Note deleted successfully!");
+    }
+
+    // ------------------- DELETE ANY NOTE (ADMIN) -------------------
+    @DeleteMapping("/any/id/{myId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> deleteAny(@PathVariable String myId){
+        noteService.deleteNoteById(myId);
         return ResponseEntity.ok("Note deleted successfully!");
     }
 }

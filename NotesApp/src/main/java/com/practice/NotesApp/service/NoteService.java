@@ -61,9 +61,31 @@ public class NoteService {
         return noteRepository.save(existingNote);
     }
 
+    public Note updateNoteById(String id, Note updatedNote) {
+        Note existingNote = noteRepository.findById(id)
+                .orElseThrow(() -> new NoteNotFoundException("No note found with id: " + id));
+
+        if (updatedNote.getTitle() != null) {
+            existingNote.setTitle(updatedNote.getTitle());
+        }
+
+        if (updatedNote.getContent() != null) {
+            existingNote.setContent(updatedNote.getContent());
+        }
+
+        return noteRepository.save(existingNote);
+    }
+
     // ------------------- DELETE -------------------
     public Boolean deleteNoteForUser(String id, User user){
         Note existingNote = getNoteByIdForUser(id, user); // ownership checked
+        noteRepository.delete(existingNote);
+        return true;
+    }
+
+    public Boolean deleteNoteById(String id) {
+        Note existingNote = noteRepository.findById(id)
+                .orElseThrow(() -> new NoteNotFoundException("No note found with id: " + id));
         noteRepository.delete(existingNote);
         return true;
     }
