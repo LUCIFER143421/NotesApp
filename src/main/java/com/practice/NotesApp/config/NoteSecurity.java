@@ -31,7 +31,7 @@ public class NoteSecurity {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/h2-console/**", "/auth/**").permitAll()
+                        .requestMatchers("/", "/index.html", "/ping", "/h2-console/**", "/auth/**").permitAll()
                         .requestMatchers("/note/**").hasAnyRole("ADMIN", "USER", "EDITOR", "DEVELOPER")
                         .anyRequest().authenticated()
                 )
