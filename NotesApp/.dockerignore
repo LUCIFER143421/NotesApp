@@ -1,5 +1,4 @@
-target
+target/
 .git
-.idea
-*.iml
-.DS_Store
+.gitignore
+node_modules
