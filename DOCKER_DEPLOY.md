@@ -1,4 +1,4 @@
-# Docker deployment
+# Deployment Guide
 
 ## Run locally with Docker Compose
 
@@ -14,33 +14,22 @@ Stop:
 docker compose down
 ```
 
-Stop and remove DB volume:
+## Deploy on Render (recommended)
 
-```bash
-docker compose down -v
-```
-
-## Deploy for free
-
-### Option 1 (recommended): Render + Neon (free PostgreSQL)
 1. Push this repo to GitHub.
-2. Create a free PostgreSQL database on Neon and copy connection details.
-3. On Render, create a **Web Service** connected to this repo.
-4. Build command:
-   ```bash
-   docker build -t notesapp .
-   ```
-5. Start command:
-   ```bash
-   java -jar /app/app.jar
-   ```
-6. Set environment variables in Render:
+2. Create a PostgreSQL database (Render Postgres or Neon).
+3. In Render, create a **Web Service** from this repo.
+4. Use these commands:
+   - **Build Command:** `./mvnw clean package -DskipTests`
+   - **Start Command:** `java -jar target/NotesApp-0.0.1-SNAPSHOT.jar`
+5. Set environment variables:
    - `SPRING_PROFILES_ACTIVE=prod`
    - `SPRING_DATASOURCE_URL=jdbc:postgresql://<host>:5432/<db>?sslmode=require`
    - `SPRING_DATASOURCE_USERNAME=<user>`
    - `SPRING_DATASOURCE_PASSWORD=<password>`
+   - `JWT_SECRET=<a-long-random-secret>`
 
-### Option 2: Railway
-- Deploy from GitHub with Dockerfile.
-- Add a PostgreSQL service.
-- Map the same Spring datasource environment variables.
+After deploy:
+- Open `https://<your-render-domain>/` for the landing page.
+- Register with `POST /auth/register` (or the form on `/`).
+- Login with `POST /auth/login`.
