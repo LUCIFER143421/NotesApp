@@ -3,6 +3,7 @@ package com.practice.NotesApp.controller;
 import com.practice.NotesApp.DTO.LoginRequestDto;
 import com.practice.NotesApp.DTO.LoginResponseDto;
 import com.practice.NotesApp.DTO.RegisterRequestDto;
+import com.practice.NotesApp.DTO.UserSummaryDto;
 import com.practice.NotesApp.model.User;
 import com.practice.NotesApp.repository.UserRepository;
 import com.practice.NotesApp.config.JwtUtil;
@@ -11,6 +12,9 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/auth")
@@ -56,5 +60,17 @@ public class AuthController {
         );
         String token = jwtUtil.generateToken(loginRequestDto.getUsername());
         return new LoginResponseDto(token);
+    }
+
+    @GetMapping("/me")
+    public UserSummaryDto me(Principal principal) {
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return new UserSummaryDto(
+                user.getId(),
+                user.getUsername(),
+                user.getRoles().stream().map(role -> role.getName()).collect(Collectors.toSet())
+        );
     }
 }

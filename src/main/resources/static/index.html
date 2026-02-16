@@ -3,103 +3,459 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NotesApp API</title>
+    <title>NotesApp</title>
     <style>
-        :root { color-scheme: light dark; }
+        :root {
+            color-scheme: dark;
+            --bg: #0b1120;
+            --card: #111827;
+            --border: #243041;
+            --text: #e2e8f0;
+            --muted: #93a4bd;
+            --primary: #3b82f6;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+        * { box-sizing: border-box; }
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background: #101828;
-            color: #f8fafc;
+            font-family: Inter, system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 24px;
             display: grid;
-            place-items: center;
-            min-height: 100vh;
-            padding: 16px;
+            gap: 16px;
         }
         .card {
-            width: min(720px, 100%);
-            background: #1f2937;
-            border: 1px solid #334155;
-            border-radius: 14px;
-            padding: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
         }
-        h1 { margin-top: 0; }
-        code {
-            background: #0f172a;
-            border: 1px solid #334155;
-            padding: 2px 6px;
-            border-radius: 6px;
+        h1, h2, h3 { margin: 0 0 10px; }
+        .muted { color: var(--muted); }
+        .grid {
+            display: grid;
+            gap: 12px;
         }
-        form { display: grid; gap: 12px; margin-top: 16px; }
-        input, button {
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+        input, textarea, button {
+            width: 100%;
             border-radius: 8px;
-            border: 1px solid #475569;
-            padding: 10px 12px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: var(--text);
             font-size: 14px;
+            padding: 10px;
         }
+        textarea { min-height: 90px; resize: vertical; }
         button {
-            background: #2563eb;
-            color: #fff;
-            border: none;
             cursor: pointer;
+            background: var(--primary);
+            border: none;
+            font-weight: 600;
         }
-        .muted { color: #cbd5e1; }
-        pre {
-            white-space: pre-wrap;
-            background: #0f172a;
+        button.secondary { background: #374151; }
+        button.danger { background: var(--danger); }
+        button.success { background: var(--success); }
+        .row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .chip {
+            display: inline-block;
+            border: 1px solid #334155;
+            border-radius: 999px;
+            padding: 4px 10px;
+            margin-right: 6px;
+            font-size: 12px;
+            color: #cbd5e1;
+        }
+        .note-item, .user-item {
             border: 1px solid #334155;
             border-radius: 8px;
-            padding: 10px;
-            min-height: 48px;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #0f172a;
         }
+        .status {
+            background: #020617;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            min-height: 56px;
+            padding: 10px;
+            white-space: pre-wrap;
+        }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
-<div class="card">
-    <h1>NotesApp is running ✅</h1>
-    <p class="muted">This project is a REST API. Use these endpoints:</p>
-    <ul>
-        <li>Register: <code>POST /auth/register</code></li>
-        <li>Login: <code>POST /auth/login</code></li>
-        <li>Health check: <code>GET /ping</code></li>
-    </ul>
+<div class="container">
+    <div class="card">
+        <h1>NotesApp Frontend</h1>
+        <p class="muted">Register, login, manage notes, and use role-based operations from one page.</p>
+        <div id="sessionInfo" class="muted">Not logged in.</div>
+        <div id="roles"></div>
+        <div class="row" style="margin-top:10px;">
+            <button id="refreshProfile" class="secondary">Refresh Profile</button>
+            <button id="logoutBtn" class="danger">Logout</button>
+        </div>
+    </div>
 
-    <h2>Quick register form</h2>
-    <form id="registerForm">
-        <input id="username" type="text" placeholder="username" required />
-        <input id="password" type="password" placeholder="password" required />
-        <button type="submit">Register</button>
-    </form>
+    <div class="grid grid-2">
+        <div class="card">
+            <h2>Register</h2>
+            <div class="grid">
+                <input id="registerUsername" placeholder="Username" />
+                <input id="registerPassword" type="password" placeholder="Password" />
+                <button id="registerBtn" class="success">Register</button>
+            </div>
+        </div>
 
-    <p class="muted">Response:</p>
-    <pre id="result">Waiting for request...</pre>
+        <div class="card">
+            <h2>Login</h2>
+            <div class="grid">
+                <input id="loginUsername" placeholder="Username" />
+                <input id="loginPassword" type="password" placeholder="Password" />
+                <button id="loginBtn">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-2">
+        <div class="card">
+            <h2>Create Note</h2>
+            <div class="grid">
+                <input id="createTitle" placeholder="Note title" />
+                <textarea id="createContent" placeholder="Note content"></textarea>
+                <button id="createBtn" class="success">Create Note</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Update Your Note</h2>
+            <div class="grid">
+                <input id="updateNoteId" placeholder="Note id" />
+                <input id="updateTitle" placeholder="New title" />
+                <textarea id="updateContent" placeholder="New content"></textarea>
+                <button id="updateBtn">Update Note</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Your Notes</h2>
+        <div class="row" style="margin-bottom: 10px;">
+            <button id="loadNotesBtn">Load Notes</button>
+        </div>
+        <div id="notesList" class="muted">No notes loaded.</div>
+    </div>
+
+    <div id="editorTools" class="card hidden">
+        <h2>Editor Tools (ROLE_EDITOR)</h2>
+        <div class="grid grid-2">
+            <div class="grid">
+                <input id="editorNoteId" placeholder="Any note id" />
+                <input id="editorTitle" placeholder="New title" />
+                <textarea id="editorContent" placeholder="New content"></textarea>
+                <button id="editorUpdateBtn">Update Any Note</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminTools" class="card hidden">
+        <h2>Admin Tools (ROLE_ADMIN)</h2>
+        <div class="grid grid-2">
+            <div class="grid">
+                <input id="adminDeleteNoteId" placeholder="Any note id" />
+                <button id="adminDeleteNoteBtn" class="danger">Delete Any Note</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="userMgmt" class="card hidden">
+        <h2>User Management (ROLE_ADMIN or ROLE_DEVELOPER)</h2>
+        <div class="row" style="margin-bottom:10px;">
+            <button id="loadUsersBtn">Load Users</button>
+        </div>
+        <div id="usersList" class="muted">Users not loaded.</div>
+    </div>
+
+    <div class="card">
+        <h2>Status</h2>
+        <div id="status" class="status">Ready.</div>
+    </div>
 </div>
 
 <script>
-    const form = document.getElementById('registerForm');
-    const result = document.getElementById('result');
+    const statusEl = document.getElementById('status');
+    const sessionInfo = document.getElementById('sessionInfo');
+    const rolesEl = document.getElementById('roles');
+    const notesList = document.getElementById('notesList');
+    const usersList = document.getElementById('usersList');
+    const editorTools = document.getElementById('editorTools');
+    const adminTools = document.getElementById('adminTools');
+    const userMgmt = document.getElementById('userMgmt');
 
-    form.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
+    const tokenKey = 'notesapp_token';
+    let currentUser = null;
 
-        result.textContent = 'Submitting...';
+    function setStatus(message, data) {
+        const payload = data ? `\n${JSON.stringify(data, null, 2)}` : '';
+        statusEl.textContent = `${new Date().toLocaleTimeString()} - ${message}${payload}`;
+    }
+
+    function getToken() { return localStorage.getItem(tokenKey); }
+    function setToken(token) { localStorage.setItem(tokenKey, token); }
+    function clearToken() { localStorage.removeItem(tokenKey); }
+
+    function hasRole(role) {
+        return currentUser && currentUser.roles && currentUser.roles.includes(role);
+    }
+
+    function renderSession() {
+        if (!currentUser) {
+            sessionInfo.textContent = 'Not logged in.';
+            rolesEl.innerHTML = '';
+            editorTools.classList.add('hidden');
+            adminTools.classList.add('hidden');
+            userMgmt.classList.add('hidden');
+            return;
+        }
+
+        sessionInfo.textContent = `Logged in as ${currentUser.username} (id: ${currentUser.id})`;
+        rolesEl.innerHTML = currentUser.roles.map(role => `<span class="chip">${role}</span>`).join('');
+        editorTools.classList.toggle('hidden', !hasRole('ROLE_EDITOR'));
+        adminTools.classList.toggle('hidden', !hasRole('ROLE_ADMIN'));
+        userMgmt.classList.toggle('hidden', !(hasRole('ROLE_ADMIN') || hasRole('ROLE_DEVELOPER')));
+    }
+
+    async function request(path, options = {}) {
+        const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+        const token = getToken();
+        if (token) headers.Authorization = `Bearer ${token}`;
+
+        const response = await fetch(path, { ...options, headers });
+        const contentType = response.headers.get('content-type') || '';
+        const payload = contentType.includes('application/json') ? await response.json() : await response.text();
+
+        if (!response.ok) {
+            const error = typeof payload === 'string' ? payload : JSON.stringify(payload);
+            throw new Error(`${response.status} ${response.statusText}: ${error}`);
+        }
+
+        return payload;
+    }
+
+    async function refreshProfile() {
+        const token = getToken();
+        if (!token) {
+            currentUser = null;
+            renderSession();
+            return;
+        }
 
         try {
-            const response = await fetch('/auth/register', {
+            currentUser = await request('/auth/me');
+            currentUser.roles = Array.from(currentUser.roles || []);
+            renderSession();
+            setStatus('Profile loaded', currentUser);
+        } catch (error) {
+            clearToken();
+            currentUser = null;
+            renderSession();
+            setStatus(`Profile refresh failed. Token cleared. ${error.message}`);
+        }
+    }
+
+    async function register() {
+        try {
+            const username = document.getElementById('registerUsername').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            const data = await request('/auth/register', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
-
-            const text = await response.text();
-            result.textContent = `${response.status} ${response.statusText}\n${text}`;
+            setStatus('Register response', data);
         } catch (error) {
-            result.textContent = `Request failed: ${error.message}`;
+            setStatus(`Register failed: ${error.message}`);
         }
+    }
+
+    async function login() {
+        try {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const data = await request('/auth/login', {
+                method: 'POST',
+                body: JSON.stringify({ username, password })
+            });
+            setToken(data.token);
+            setStatus('Login successful. Token stored.', { tokenPreview: `${data.token.slice(0, 18)}...` });
+            await refreshProfile();
+        } catch (error) {
+            setStatus(`Login failed: ${error.message}`);
+        }
+    }
+
+    async function createNote() {
+        try {
+            const title = document.getElementById('createTitle').value.trim();
+            const content = document.getElementById('createContent').value.trim();
+            const note = await request('/note', {
+                method: 'POST',
+                body: JSON.stringify({ title, content })
+            });
+            setStatus('Note created', note);
+            await loadNotes();
+        } catch (error) {
+            setStatus(`Create note failed: ${error.message}`);
+        }
+    }
+
+    async function loadNotes() {
+        try {
+            const notes = await request('/note');
+            if (!notes.length) {
+                notesList.innerHTML = '<span class="muted">No notes yet.</span>';
+            } else {
+                notesList.innerHTML = notes.map(note => `
+                    <div class="note-item">
+                        <div><strong>${note.title}</strong></div>
+                        <div class="muted">ID: ${note.id}</div>
+                        <p>${note.content}</p>
+                        <button class="danger" onclick="deleteOwnNote('${note.id}')">Delete</button>
+                    </div>
+                `).join('');
+            }
+            setStatus('Loaded your notes', notes);
+        } catch (error) {
+            setStatus(`Load notes failed: ${error.message}`);
+        }
+    }
+
+    async function updateOwnNote() {
+        try {
+            const id = document.getElementById('updateNoteId').value.trim();
+            const title = document.getElementById('updateTitle').value.trim();
+            const content = document.getElementById('updateContent').value.trim();
+            const note = await request(`/note/id/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ title, content })
+            });
+            setStatus('Note updated', note);
+            await loadNotes();
+        } catch (error) {
+            setStatus(`Update note failed: ${error.message}`);
+        }
+    }
+
+    async function deleteOwnNote(noteId) {
+        try {
+            const result = await request(`/note/id/${noteId}`, { method: 'DELETE' });
+            setStatus('Note deleted', result);
+            await loadNotes();
+        } catch (error) {
+            setStatus(`Delete note failed: ${error.message}`);
+        }
+    }
+
+    async function editorUpdateAnyNote() {
+        try {
+            const id = document.getElementById('editorNoteId').value.trim();
+            const title = document.getElementById('editorTitle').value.trim();
+            const content = document.getElementById('editorContent').value.trim();
+            const note = await request(`/note/any/id/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ title, content })
+            });
+            setStatus('Editor updated note', note);
+        } catch (error) {
+            setStatus(`Editor update failed: ${error.message}`);
+        }
+    }
+
+    async function adminDeleteAnyNote() {
+        try {
+            const id = document.getElementById('adminDeleteNoteId').value.trim();
+            const result = await request(`/note/any/id/${id}`, { method: 'DELETE' });
+            setStatus('Admin deleted note', result);
+            await loadNotes();
+        } catch (error) {
+            setStatus(`Admin delete failed: ${error.message}`);
+        }
+    }
+
+    async function loadUsers() {
+        try {
+            const users = await request('/admin/users');
+            usersList.innerHTML = users.map(user => `
+                <div class="user-item">
+                    <div><strong>${user.username}</strong> (id: ${user.id})</div>
+                    <div>${(user.roles || []).map(role => `<span class='chip'>${role}</span>`).join('')}</div>
+                    <div class="row" style="margin-top:8px;">
+                        <input id="roles-${user.id}" placeholder="Comma roles e.g. USER,EDITOR" />
+                        <button onclick="updateRoles(${user.id})">Update Roles</button>
+                        ${hasRole('ROLE_ADMIN') ? `<button class="danger" onclick="deleteUser(${user.id})">Delete User</button>` : ''}
+                    </div>
+                </div>
+            `).join('');
+            setStatus('Loaded users', users);
+        } catch (error) {
+            setStatus(`Load users failed: ${error.message}`);
+        }
+    }
+
+    async function updateRoles(userId) {
+        try {
+            const raw = document.getElementById(`roles-${userId}`).value;
+            const roles = raw.split(',').map(v => v.trim()).filter(Boolean);
+            const data = await request(`/admin/users/${userId}/roles`, {
+                method: 'PUT',
+                body: JSON.stringify({ roles })
+            });
+            setStatus('Roles updated', data);
+            await loadUsers();
+            await refreshProfile();
+        } catch (error) {
+            setStatus(`Update roles failed: ${error.message}`);
+        }
+    }
+
+    async function deleteUser(userId) {
+        try {
+            const data = await request(`/admin/users/${userId}`, { method: 'DELETE' });
+            setStatus('User deleted', data);
+            await loadUsers();
+        } catch (error) {
+            setStatus(`Delete user failed: ${error.message}`);
+        }
+    }
+
+    document.getElementById('registerBtn').addEventListener('click', register);
+    document.getElementById('loginBtn').addEventListener('click', login);
+    document.getElementById('createBtn').addEventListener('click', createNote);
+    document.getElementById('loadNotesBtn').addEventListener('click', loadNotes);
+    document.getElementById('updateBtn').addEventListener('click', updateOwnNote);
+    document.getElementById('editorUpdateBtn').addEventListener('click', editorUpdateAnyNote);
+    document.getElementById('adminDeleteNoteBtn').addEventListener('click', adminDeleteAnyNote);
+    document.getElementById('loadUsersBtn').addEventListener('click', loadUsers);
+    document.getElementById('refreshProfile').addEventListener('click', refreshProfile);
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+        clearToken();
+        currentUser = null;
+        renderSession();
+        setStatus('Logged out.');
     });
+
+    window.deleteOwnNote = deleteOwnNote;
+    window.updateRoles = updateRoles;
+    window.deleteUser = deleteUser;
+
+    refreshProfile();
 </script>
 </body>
 </html>
